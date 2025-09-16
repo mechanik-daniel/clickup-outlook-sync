@@ -50,13 +50,14 @@ This JavaScript project will automate the synchronization of Outlook calendar ev
 - **Active window duration**: Number of months to sync backwards (default: 3)
 
 ## Next Steps
-1. Set up project structure and dependencies
-2. Implement authentication for Outlook and ClickUp
-3. Build mapping store logic (include pruning of entries older than the active window)
-4. Develop sync logic (fetch, compare, update only within active window)
-5. Add configuration and environment variable support
-6. Test with sample data
-7. Schedule periodic sync (e.g., with node-cron)
+1. Core project structure & dependencies (DONE - modular refactor)
+2. Outlook authentication (refresh -> access) (DONE - token manager w/ caching)
+3. Add ClickUp client & mapping store (PENDING)
+4. Implement active window filtering in fetch layer (PENDING)
+5. Sync logic (delta + create/update) (PENDING)
+6. Config validation & logging (PARTIAL - basic added)
+7. Tests & reliability (PENDING)
+8. Scheduler / CLI commands (PARTIAL - fetch command added)
 
 ---
 This document is intended for both human developers and Copilot agents to guide the implementation and configuration of the Outlook-ClickUp calendar sync tool.

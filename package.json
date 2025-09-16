@@ -4,7 +4,8 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "fetch:outlook": "node src/cli/main.js"
   },
   "dependencies": {
     "@microsoft/microsoft-graph-client": "^3.0.0",

@@ -1,14 +1,7 @@
 import { Client } from '@microsoft/microsoft-graph-client';
 import 'isomorphic-fetch';
 
-function getAccessToken() {
-  // TODO: Implement OAuth2 token retrieval using env vars
-  // For now, use OUTLOOK_REFRESH_TOKEN from .env
-  return process.env.OUTLOOK_REFRESH_TOKEN;
-}
-
-export async function fetchOutlookEvents() {
-  const accessToken = getAccessToken();
+export async function fetchOutlookEvents(accessToken) {
   if (!accessToken) throw new Error('Missing Outlook access token');
 
   const client = Client.init({
