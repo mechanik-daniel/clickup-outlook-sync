@@ -12,7 +12,8 @@
   "dependencies": {
     "@microsoft/microsoft-graph-client": "^3.0.0",
     "dotenv": "^16.0.0",
-    "isomorphic-fetch": "^3.0.0"
+    "isomorphic-fetch": "^3.0.0",
+    "html-to-text": "^9.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",

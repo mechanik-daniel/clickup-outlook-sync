@@ -17,7 +17,9 @@ export const config = {
   },
   sync: {
     activeWindowMonths: parseInt(process.env.ACTIVE_WINDOW_MONTHS || '3', 10),
-    targetCategory: process.env.TARGET_EVENT_CATEGORY || null
+  targetCategory: process.env.TARGET_EVENT_CATEGORY || null,
+  clickupTaskIdRegex: process.env.CLICKUP_TASK_ID_REGEX || '^[A-Za-z0-9_-]{6,15}$',
+  clickupPrefixedPattern: process.env.CLICKUP_TASK_ID_PREFIX || 'tid#'
   }
 };
 
