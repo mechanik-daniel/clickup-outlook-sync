@@ -13,11 +13,12 @@ export const config = {
     clientSecret: required('OUTLOOK_CLIENT_SECRET'),
     tenantId: required('OUTLOOK_TENANT_ID'),
     refreshToken: required('OUTLOOK_REFRESH_TOKEN'),
-    scope: 'offline_access Calendars.Read',
+    scope: 'offline_access Calendars.Read'
   },
   sync: {
     activeWindowMonths: parseInt(process.env.ACTIVE_WINDOW_MONTHS || '3', 10),
-  },
+    targetCategory: process.env.TARGET_EVENT_CATEGORY || null
+  }
 };
 
 logger.debug('Loaded config', { config: { ...config, outlook: { ...config.outlook, clientSecret: '***', refreshToken: '***' } } });

@@ -18,7 +18,7 @@ export async function getAccessTokenFromRefreshToken() {
   const response = await fetch(tokenUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params,
+    body: params
   });
 
   if (!response.ok) {

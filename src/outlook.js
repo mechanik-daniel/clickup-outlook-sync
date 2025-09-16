@@ -7,7 +7,7 @@ export async function fetchOutlookEvents(accessToken) {
   const client = Client.init({
     authProvider: (done) => {
       done(null, accessToken);
-    },
+    }
   });
 
   // Example: fetch events for the next week
