@@ -8,7 +8,9 @@ export async function fetchCalendarView(accessToken, { start, end, timezone = 'U
   const request = client
     .api(url)
     .header('Prefer', `outlook.timezone="${timezone}"`)
-    .top(400);
+    .top(400)
+  // Explicit select to ensure stable identity fields are present
+    .select('id,subject,body,bodyPreview,start,end,categories,iCalUId,seriesMasterId');
   if (category) {
     // Graph supports filtering categories (collection of strings) with any()
     request.filter(`categories/any(c:c eq '${category.replace(/'/g, "''")}')`);

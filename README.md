@@ -23,6 +23,22 @@ Pending (next milestones):
 - CLI commands for dry-run vs apply.
 - Tests (unit + integration) & error backoff.
 
+## ClickUp Integration (In Progress)
+Scaffolding added (client, time entry placeholders, dry-run planner & mapping store) but not yet performing real API writes unless `CLICKUP_API_TOKEN` is set.
+
+Run a dry-run planning pass:
+```
+npm run sync:dry-run
+```
+Outputs proposed operations to `staging/clickup_dry_run.json`.
+
+Additional env vars:
+```
+CLICKUP_API_TOKEN=
+CLICKUP_TEAM_ID=
+MAPPING_STORE_PATH=data/mapping.json
+```
+
 ## Project Structure
 ```
 src/
@@ -57,7 +73,9 @@ Example `.env` snippet:
 OUTLOOK_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 OUTLOOK_CLIENT_SECRET=yourSecret
 OUTLOOK_TENANT_ID=tenant-guid
-OUTLOOK_REFRESH_TOKEN=refresh-token-value
+* ACTIVE_WINDOW_MONTHS: Rolling window size (months) to fetch events (ignored if HARD_START_DATE set).
+* HARD_START_DATE: Optional fixed start date (YYYY-MM-DD, local midnight) overriding rolling window.
+* SUBJECT_TRANSFORM_JSONATA: Optional JSONata expression applied to Outlook subject to produce ClickUp time entry description (default: $trim($)).
 TARGET_EVENT_CATEGORY=Billable
 ACTIVE_WINDOW_MONTHS=3
 CLICKUP_TASK_ID_REGEX=^[A-Za-z0-9_-]{6,15}$

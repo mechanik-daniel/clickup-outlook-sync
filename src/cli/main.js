@@ -31,7 +31,7 @@ async function run() {
     const datedPath = path.join(stagingDir, `outlook_events_${start.substring(0,10)}.json`);
     const extracted = events.map(e => {
       const extraction = extractTaskId(e);
-      return { id: e.id, subject: e.subject, categories: e.categories, extraction };
+      return { id: e.id, iCalUId: e.iCalUId, seriesMasterId: e.seriesMasterId, subject: e.subject, categories: e.categories, extraction };
     });
     const matched = extracted.filter(r => r.extraction && r.extraction.taskId);
     const unmatched = extracted.filter(r => !r.extraction);

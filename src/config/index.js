@@ -17,9 +17,18 @@ export const config = {
   },
   sync: {
     activeWindowMonths: parseInt(process.env.ACTIVE_WINDOW_MONTHS || '3', 10),
-  targetCategory: process.env.TARGET_EVENT_CATEGORY || null,
-  clickupTaskIdRegex: process.env.CLICKUP_TASK_ID_REGEX || '^[A-Za-z0-9_-]{6,15}$',
-  clickupPrefixedPattern: process.env.CLICKUP_TASK_ID_PREFIX || 'tid#'
+    targetCategory: process.env.TARGET_EVENT_CATEGORY || null,
+    clickupTaskIdRegex: process.env.CLICKUP_TASK_ID_REGEX || '^[A-Za-z0-9_-]{6,15}$',
+    clickupPrefixedPattern: process.env.CLICKUP_TASK_ID_PREFIX || 'tid#',
+    hardStartDate: process.env.HARD_START_DATE || null, // YYYY-MM-DD (local time midnight)
+    subjectTransformExpression: process.env.SUBJECT_TRANSFORM_JSONATA || '$trim($)'
+  },
+  clickup: {
+    apiToken: process.env.CLICKUP_API_TOKEN || null,
+    teamId: process.env.CLICKUP_TEAM_ID || null
+  },
+  storage: {
+    mappingPath: process.env.MAPPING_STORE_PATH || 'data/mapping.json'
   }
 };
 
