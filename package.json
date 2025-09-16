@@ -5,11 +5,18 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "fetch:outlook": "node src/cli/main.js"
+    "fetch:outlook": "node src/cli/main.js",
+    "lint": "eslint \"src/**/*.js\"",
+    "lint:fix": "eslint \"src/**/*.js\" --fix"
   },
   "dependencies": {
     "@microsoft/microsoft-graph-client": "^3.0.0",
-    "isomorphic-fetch": "^3.0.0",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "isomorphic-fetch": "^3.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "eslint": "^9.35.0",
+    "globals": "^16.4.0"
   }
 }
