@@ -21,7 +21,10 @@ export const config = {
     clickupTaskIdRegex: process.env.CLICKUP_TASK_ID_REGEX || '^[A-Za-z0-9_-]{6,15}$',
     clickupPrefixedPattern: process.env.CLICKUP_TASK_ID_PREFIX || 'tid#',
     hardStartDate: process.env.HARD_START_DATE || null, // YYYY-MM-DD (local time midnight)
-    subjectTransformExpression: process.env.SUBJECT_TRANSFORM_JSONATA || '$trim($)'
+    subjectTransformExpression: process.env.SUBJECT_TRANSFORM_JSONATA || '$trim($)',
+    outlookTimezone: process.env.OUTLOOK_TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    displayTimezone: process.env.DISPLAY_TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    windowPaddingMinutes: parseInt(process.env.WINDOW_PADDING_MINUTES || '0', 10) // widen ClickUp fetch window on both ends
   },
   clickup: {
     apiToken: process.env.CLICKUP_API_TOKEN || null,

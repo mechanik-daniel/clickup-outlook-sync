@@ -12,9 +12,19 @@ export async function planTimeEntryOperations(events, existingEntries = [], { su
   // Allow legacy rekeying if needed (events contain fresh iCalUId)
   rekeyFromLegacy(mapping, events);
   const ops = [];
+  let skippedUpdates = 0;
+  // removed optimistic assumedSkippedUpdates logic; rely solely on real fetch + snapshot only for no-op diff when remote exists
   const unmatched = [];
   const seenIds = new Set();
   const duplicateIds = new Set();
+  // Index existing ClickUp entries by id for diff checks
+  const existingById = {};
+  existingEntries.forEach(te => {
+    const id = te.id || te.time_entry_id || te._id;
+    if (id) existingById[id] = te;
+  });
+  const toNum = v => (v === null || v === undefined ? undefined : Number(v));
+  const isClose = (a, b, tolerance = 1000) => (a === undefined || b === undefined) ? true : Math.abs(a - b) <= tolerance; // allow 1s drift
   for (const ev of events) {
     // Normalize iCalUId (some older snapshots had a 'uid' field); prefer documented iCalUId
     if (!ev.iCalUId && ev.uid) ev.iCalUId = ev.uid;
@@ -34,6 +44,10 @@ export async function planTimeEntryOperations(events, existingEntries = [], { su
       continue; // skip malformed timing
     }
     const duration = end - start;
+    if (duration <= 0) {
+      unmatched.push({ id: ev.id, iCalUId: ev.iCalUId, seriesMasterId: ev.seriesMasterId, subject: ev.subject, reason: 'non_positive_duration' });
+      continue;
+    }
     let description = ev.subject || '';
     if (subjectExpr) {
       try {
@@ -43,7 +57,30 @@ export async function planTimeEntryOperations(events, existingEntries = [], { su
       }
     }
     if (existing) {
-      ops.push({ type: 'update', eventId: ev.id, iCalUId: ev.iCalUId, seriesMasterId: ev.seriesMasterId, timeEntryId: existing.clickupTimeEntryId, taskId: extraction.taskId, start, end, duration, subject: ev.subject, description });
+      const existingTe = existingById[existing.clickupTimeEntryId];
+      if (existingTe) {
+        const existingStart = toNum(existingTe.start);
+        const existingStopRaw = existingTe.stop || existingTe.end || (existingTe.start && existingTe.duration ? (toNum(existingTe.start) + toNum(existingTe.duration)) : undefined);
+        const existingStop = toNum(existingStopRaw);
+        const existingDuration = toNum(existingTe.duration) || (existingStop && existingStart ? existingStop - existingStart : undefined);
+        const existingTaskId = existingTe.tid || existingTe.task_id || existingTe.task?.id;
+        const existingDesc = (existingTe.description || '').trim();
+        const plannedStop = end; // internal 'end' corresponds to stop
+        const descTrim = (description || '').trim();
+        const unchanged = isClose(existingStart, start) &&
+          isClose(existingStop, plannedStop) &&
+          (existingDuration ? isClose(existingDuration, duration) : true) &&
+          (!existingTaskId || existingTaskId === extraction.taskId) &&
+          (existingDesc === descTrim);
+        if (unchanged) {
+          skippedUpdates += 1;
+        } else {
+          ops.push({ type: 'update', eventId: ev.id, iCalUId: ev.iCalUId, seriesMasterId: ev.seriesMasterId, timeEntryId: existing.clickupTimeEntryId, taskId: extraction.taskId, start, end, duration, subject: ev.subject, description });
+        }
+      } else {
+        // Remote time entry missing (deleted or outside fetch window). Recreate as a fresh create op.
+        ops.push({ type: 'create', eventId: ev.id, iCalUId: ev.iCalUId, seriesMasterId: ev.seriesMasterId, taskId: extraction.taskId, start, end, duration, subject: ev.subject, description, reason: 'missing_remote' });
+      }
     } else {
       ops.push({ type: 'create', eventId: ev.id, iCalUId: ev.iCalUId, seriesMasterId: ev.seriesMasterId, taskId: extraction.taskId, start, end, duration, subject: ev.subject, description });
     }
@@ -57,5 +94,5 @@ export async function planTimeEntryOperations(events, existingEntries = [], { su
   orphans.forEach(o => {
     ops.push({ type: 'delete', iCalUId: o.iCalUId, timeEntryId: o.clickupTimeEntryId });
   });
-  return { ops, unmatched, orphanCount: orphans.length, existingEntriesCount: existingEntries.length };
+  return { ops, unmatched, orphanCount: orphans.length, existingEntriesCount: existingEntries.length, skippedUpdates };
 }

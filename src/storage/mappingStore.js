@@ -35,7 +35,12 @@ export function saveMapping(mapping) {
 }
 
 export function upsertMapping(mapping, iCalUId, clickupTimeEntryId, meta = {}) {
-  mapping.entries[iCalUId] = { clickupTimeEntryId, meta, updatedAt: new Date().toISOString() };
+  const prev = mapping.entries[iCalUId] || {};
+  mapping.entries[iCalUId] = {
+    clickupTimeEntryId,
+    meta: { ...(prev.meta || {}), ...meta },
+    updatedAt: new Date().toISOString()
+  };
 }
 
 export function rekeyFromLegacy(mapping, events) {
