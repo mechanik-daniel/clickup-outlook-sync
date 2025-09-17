@@ -23,14 +23,32 @@ function formatForDisplay(ms) {
 function summarizeOp(op) {
   const startIso = new Date(op.start).toISOString();
   const local = formatForDisplay(op.start);
-  if (op.type === 'create') {
-    return `[CREATE] task=${op.taskId} startUTC=${startIso} startLocal=${local} dur=${(op.duration/60000).toFixed(1)}m subj="${op.subject}"`;
-  } else if (op.type === 'update') {
-    return `[UPDATE] timeEntryId=${op.timeEntryId} task=${op.taskId} startUTC=${startIso} startLocal=${local} dur=${(op.duration/60000).toFixed(1)}m subj="${op.subject}"`;
-  } else if (op.type === 'delete') {
-    return `[DELETE] timeEntryId=${op.timeEntryId} iCalUId=${op.iCalUId}`;
-  }
-  return `[UNKNOWN] ${JSON.stringify(op)}`;
+  const durMin = (op.duration/60000).toFixed(1);
+  const desc = (op.description || '').slice(0,80);
+  const reason = op.reason || '';
+  if (op.type === 'create') return { kind: 'CREATE', id: '-', timeEntryId: '-', task: op.taskId, startUtc: startIso, startLocal: local, durMin, subj: op.subject, desc, reason };
+  if (op.type === 'update') return { kind: 'UPDATE', id: op.timeEntryId, timeEntryId: op.timeEntryId, task: op.taskId, startUtc: startIso, startLocal: local, durMin, subj: op.subject, desc, reason };
+  if (op.type === 'delete') return { kind: 'DELETE', id: op.timeEntryId, timeEntryId: op.timeEntryId, task: '-', startUtc: '-', startLocal: '-', durMin: '-', subj: '-', desc: '-', reason };
+  return { kind: 'UNKNOWN', id: '?', task: '?', startUtc: startIso, startLocal: local, durMin, subj: op.subject, desc, reason };
+}
+
+function renderOpTable(opSummaries, page = 0, pageSize = 10) {
+  const slice = opSummaries.slice(page*pageSize, page*pageSize + pageSize);
+  if (!slice.length) return 'No operations.';
+  const headers = ['#','TYPE','Task','Start(Local)','Dur(m)','Subject','Desc','Reason'];
+  const rows = slice.map((s,i)=>[
+    (page*pageSize)+i+1,
+    s.kind,
+    s.task||'-',
+    s.startLocal||'-',
+    s.durMin||'-',
+    (s.subj||'').slice(0,40),
+    (s.desc||'').slice(0,40),
+    s.reason||''
+  ]);
+  const widths = headers.map((h,idx)=>Math.min( Math.max(h.length, ...rows.map(r=>String(r[idx]).length)), 50));
+  const fmtRow = r => r.map((c,i)=>String(c).padEnd(widths[i])).join('  ');
+  return [fmtRow(headers), fmtRow(headers.map(h=>'-'.repeat(h.length))), ...rows.map(fmtRow)].join('\n');
 }
 
 async function applyOp(op, mapping) {
@@ -61,7 +79,9 @@ async function main() {
   try {
     const accessToken = await getAccessToken();
     const { ops, unmatched, events } = await planSync(accessToken);
+    const summaries = ops.map(o => summarizeOp(o));
     logger.info('Planned operations ready', { totalOps: ops.length, unmatched: unmatched.length, totalEvents: events.length });
+    console.log(renderOpTable(summaries, 0, 15));
 
     const mapping = loadMapping();
 
@@ -69,7 +89,7 @@ async function main() {
     while (index < ops.length) {
       const op = ops[index];
       const summary = summarizeOp(op);
-      const ans = await ask(`Op ${index+1}/${ops.length}: ${summary}\n[y] apply, [s] skip, [q] quit > `);
+      const ans = await ask(`Op ${index+1}/${ops.length}: ${summary.kind} task=${summary.task} dur=${summary.durMin}m subj="${summary.subj}" desc="${summary.desc}" reason=${summary.reason || '-'}\n[y] apply, [s] skip, [q] quit > `);
       if (ans.toLowerCase() === 'q') break;
       if (ans.toLowerCase() === 'y') {
         try {
