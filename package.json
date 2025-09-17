@@ -15,7 +15,6 @@
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "dotenv": "^16.6.1",
     "html-to-text": "^9.0.5",
-    "isomorphic-fetch": "^3.0.0",
     "jsonata": "^2.1.0"
   },
   "devDependencies": {

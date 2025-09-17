@@ -1,5 +1,4 @@
 import { Client } from '@microsoft/microsoft-graph-client';
-import 'isomorphic-fetch';
 
 export async function fetchOutlookEvents(accessToken) {
   if (!accessToken) throw new Error('Missing Outlook access token');

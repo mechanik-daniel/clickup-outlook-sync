@@ -1,5 +1,4 @@
 import { Client } from '@microsoft/microsoft-graph-client';
-import 'isomorphic-fetch';
 import { logger } from '../../util/logger.js';
 
 export async function fetchCalendarView(accessToken, { start, end, timezone = 'UTC', category = null }) {

@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import 'dotenv/config';
 
 export async function getAccessTokenFromRefreshToken() {
