@@ -45,7 +45,8 @@ export async function updateTimeEntry(id, patch) {
     const d = body.stop - body.start;
     if (d > 0) body.duration = d; else delete body.duration;
   }
-  return apiFetch(`/time_entry/${id}`, {
+  if (!config.clickup.teamId) throw new Error('CLICKUP_TEAM_ID missing');
+  return apiFetch(`/team/${config.clickup.teamId}/time_entries/${id}`, {
     method: 'PUT',
     body: JSON.stringify(body)
   });
@@ -58,39 +59,59 @@ export async function fetchTimeEntriesWithinWindow(startMs, endMs) {
     return [];
   }
   if (!config.clickup.teamId) throw new Error('CLICKUP_TEAM_ID missing');
-  // ClickUp API supports querying by team with start_date & end_date (ms epoch)
-  const path = `/team/${config.clickup.teamId}/time_entries?start_date=${startMs}&end_date=${endMs}`;
-  logger.debug('Fetching ClickUp time entries window', { path, startMs, endMs });
-  let json;
-  try {
-    json = await apiFetch(path, { method: 'GET' });
-  } catch (e) {
-    logger.error('Failed to fetch ClickUp time entries', { error: e.message, path });
-    return [];
+  const maxPages = Math.max(1, config.clickup.timeEntriesMaxPages || 1);
+  const pageSize = Math.max(1, config.clickup.timeEntriesPageSize || 100);
+  const all = [];
+  let page = 0;
+  let more = true;
+  while (more && page < maxPages) {
+    const path = `/team/${config.clickup.teamId}/time_entries?start_date=${startMs}&end_date=${endMs}&page=${page}&limit=${pageSize}`;
+    logger.debug('Fetching ClickUp time entries window page', { page, path, startMs, endMs });
+    let json;
+    try {
+      json = await apiFetch(path, { method: 'GET' });
+    } catch (e) {
+      logger.error('Failed to fetch ClickUp time entries page', { error: e.message, page, path });
+      break;
+    }
+    let entries = [];
+    if (json) {
+      if (Array.isArray(json.data)) entries = json.data;
+      else if (Array.isArray(json.time_entries)) entries = json.time_entries;
+      else if (Array.isArray(json)) entries = json;
+    }
+    if (!entries.length) {
+      if (page === 0 && all.length === 0) {
+        const keys = json && typeof json === 'object' ? Object.keys(json) : [];
+        logger.warn('No ClickUp time entries returned for window (page 0)', { keys, startMs, endMs });
+      }
+      // Empty page => stop
+      more = false;
+    } else {
+      const sample = entries[0];
+      logger.debug('Fetched ClickUp time entries page summary', { page, count: entries.length, sampleKeys: Object.keys(sample || {}).slice(0, 10) });
+      all.push(...entries);
+      if (entries.length < pageSize) {
+        more = false; // last page (short)
+      } else {
+        page += 1;
+      }
+    }
   }
-  // Some safety: if API shape differs, try alternative fields
-  let entries = [];
-  if (json) {
-    if (Array.isArray(json.data)) entries = json.data;
-    else if (Array.isArray(json.time_entries)) entries = json.time_entries; // fallback just in case
-    else if (Array.isArray(json)) entries = json; // unexpected direct array
+  // Optional: log if we likely truncated
+  if (page >= maxPages) {
+    logger.warn('Reached max pages limit for time entries fetch; results may be truncated', { fetched: all.length, maxPages, pageSize });
   }
-  if (!entries.length) {
-    const keys = json && typeof json === 'object' ? Object.keys(json) : [];
-    logger.warn('No ClickUp time entries returned for window', { count: entries.length, keys, startMs, endMs });
-  } else {
-    const sample = entries[0];
-    logger.debug('Fetched ClickUp time entries', { count: entries.length, sampleKeys: Object.keys(sample || {}).slice(0, 10) });
-  }
-  return entries;
+  return all;
 }
 
 // Fetch a single time entry by id (used as fallback when window query misses an expected mapping)
 export async function fetchTimeEntryById(id) {
   if (!isClickUpEnabled()) return null;
   if (!id) return null;
+  if (!config.clickup.teamId) throw new Error('CLICKUP_TEAM_ID missing');
   try {
-    const json = await apiFetch(`/time_entry/${id}`, { method: 'GET' });
+    const json = await apiFetch(`/team/${config.clickup.teamId}/time_entries/${id}`, { method: 'GET' });
     // API sometimes returns { data: {...} } or direct object
     const te = json && json.data ? json.data : json;
     if (!te || typeof te !== 'object') return null;

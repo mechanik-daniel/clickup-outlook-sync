@@ -28,7 +28,9 @@ export const config = {
   },
   clickup: {
     apiToken: process.env.CLICKUP_API_TOKEN || null,
-    teamId: process.env.CLICKUP_TEAM_ID || null
+    teamId: process.env.CLICKUP_TEAM_ID || null,
+    timeEntriesMaxPages: parseInt(process.env.CLICKUP_TIME_ENTRIES_MAX_PAGES || '10', 10),
+    timeEntriesPageSize: parseInt(process.env.CLICKUP_TIME_ENTRIES_PAGE_SIZE || '100', 10)
   },
   storage: {
     mappingPath: process.env.MAPPING_STORE_PATH || 'data/mapping.json'
