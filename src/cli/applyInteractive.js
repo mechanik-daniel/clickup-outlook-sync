@@ -116,6 +116,14 @@ async function main() {
     while (index < ops.length) {
       const op = ops[index];
       const summary = summarizeOp(op);
+      
+      // Auto-skip delete operations since delete functionality is not implemented
+      if (op.type === 'delete') {
+        logger.info('Auto-skipped delete operation (not implemented)', { opType: op.type, timeEntryId: op.timeEntryId });
+        index += 1;
+        continue;
+      }
+      
       const ans = await ask(`Op ${index+1}/${ops.length}: ${summary.kind} task=${summary.task} dur=${summary.durMin}m subj="${summary.subj}" desc="${summary.desc}" reason=${summary.reason || '-'}\n[y] apply, [s] skip, [q] quit > `);
       if (ans.toLowerCase() === 'q') break;
       if (ans.toLowerCase() === 'y') {
