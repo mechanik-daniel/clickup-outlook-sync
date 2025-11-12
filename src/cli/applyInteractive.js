@@ -12,20 +12,47 @@ function ask(q) {
 }
 
 function formatForDisplay(ms) {
+  if (ms === undefined || ms === null || isNaN(ms)) {
+    return 'Invalid Date';
+  }
+  
   const tz = config.sync.displayTimezone;
   try {
     return new Intl.DateTimeFormat('en-GB', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(ms);
   } catch {
-    return new Date(ms).toISOString();
+    try {
+      return new Date(ms).toISOString();
+    } catch {
+      return 'Invalid Date';
+    }
   }
 }
 
 function summarizeOp(op) {
-  const startIso = new Date(op.start).toISOString();
-  const local = formatForDisplay(op.start);
-  const durMin = (op.duration/60000).toFixed(1);
+  let startIso = '-';
+  let local = '-';
+  let durMin = '-';
+  
+  // Only process start time if it exists and is valid
+  if (op.start !== undefined && op.start !== null) {
+    try {
+      startIso = new Date(op.start).toISOString();
+      local = formatForDisplay(op.start);
+    } catch {
+      // Handle invalid date values
+      startIso = 'Invalid Date';
+      local = 'Invalid Date';
+    }
+  }
+  
+  // Only process duration if it exists and is valid
+  if (op.duration !== undefined && op.duration !== null && !isNaN(op.duration)) {
+    durMin = (op.duration/60000).toFixed(1);
+  }
+  
   const desc = (op.description || '').slice(0,80);
   const reason = op.reason || '';
+  
   if (op.type === 'create') return { kind: 'CREATE', id: '-', timeEntryId: '-', task: op.taskId, startUtc: startIso, startLocal: local, durMin, subj: op.subject, desc, reason };
   if (op.type === 'update') return { kind: 'UPDATE', id: op.timeEntryId, timeEntryId: op.timeEntryId, task: op.taskId, startUtc: startIso, startLocal: local, durMin, subj: op.subject, desc, reason };
   if (op.type === 'delete') return { kind: 'DELETE', id: op.timeEntryId, timeEntryId: op.timeEntryId, task: '-', startUtc: '-', startLocal: '-', durMin: '-', subj: '-', desc: '-', reason };
